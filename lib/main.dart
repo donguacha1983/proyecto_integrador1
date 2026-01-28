@@ -10,7 +10,10 @@ class SecondScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Segunda Pantalla')),
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text('Segunda Pantalla'),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -91,9 +94,8 @@ class _MyHomePageState extends State<MyHomePage> {
     
     return Scaffold(
       appBar: AppBar(
-       
+        centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 11, 42, 156),
-       
         title: Text(widget.title),
       ),
       body: Center(
