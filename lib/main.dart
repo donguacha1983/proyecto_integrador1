@@ -1,11 +1,223 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 void main() {
   runApp(const MyApp());
 }
 
-class SecondScreen extends StatelessWidget {
+/// Widget innovador: Analizador de ondas animado
+class AnimatedWaveAnalyzer extends StatefulWidget {
+  final int value;
+  final VoidCallback onTap;
+
+  const AnimatedWaveAnalyzer({
+    super.key,
+    required this.value,
+    required this.onTap,
+  });
+
+  @override
+  State<AnimatedWaveAnalyzer> createState() => _AnimatedWaveAnalyzerState();
+}
+
+class _AnimatedWaveAnalyzerState extends State<AnimatedWaveAnalyzer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 3000),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.blue.shade300,
+              Colors.purple.shade300,
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.blue.withOpacity(0.3),
+              blurRadius: 20,
+              spreadRadius: 5,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              '🌊 Analizador de Ondas',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return SizedBox(
+                  height: 120,
+                  child: CustomPaint(
+                    painter: WavePainter(
+                      animation: _controller.value,
+                      frequency: widget.value + 1,
+                    ),
+                    size: Size.infinite,
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Frecuencia: ${widget.value + 1} Hz',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'Toca para incrementar',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Custom painter para dibujar las ondas animadas
+class WavePainter extends CustomPainter {
+  final double animation;
+  final int frequency;
+
+  WavePainter({
+    required this.animation,
+    required this.frequency,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.8)
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    final waveHeight = 20.0;
+    final waveLength = size.width / 2;
+
+    path.moveTo(0, size.height / 2);
+
+    for (double x = 0; x <= size.width; x++) {
+      final y = size.height / 2 +
+          waveHeight *
+              math.sin((x / waveLength + animation * frequency * 2 * math.pi) *
+                  2 *
+                  math.pi);
+      path.lineTo(x, y);
+    }
+
+    canvas.drawPath(path, paint);
+
+    // Segunda onda desfasada
+    final paint2 = Paint()
+      ..color = Colors.white.withOpacity(0.5)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final path2 = Path();
+    path2.moveTo(0, size.height / 2);
+
+    for (double x = 0; x <= size.width; x++) {
+      final y = size.height / 2 +
+          waveHeight *
+              0.6 *
+              math.sin(
+                  (x / waveLength + animation * frequency * 2 * math.pi + math.pi / 2) *
+                      2 *
+                      math.pi);
+      path2.lineTo(x, y);
+    }
+
+    canvas.drawPath(path2, paint2);
+  }
+
+  @override
+  bool shouldRepaint(WavePainter oldDelegate) {
+    return oldDelegate.animation != animation ||
+        oldDelegate.frequency != frequency;
+  }
+}
+
+class SecondScreen extends StatefulWidget {
   const SecondScreen({super.key});
+
+  @override
+  State<SecondScreen> createState() => _SecondScreenState();
+}
+
+class _SecondScreenState extends State<SecondScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showSnackBar();
+    });
+  }
+
+  void _showSnackBar() {
+    final snackBar = SnackBar(
+      content: const Text(
+        '¡Bienvenido a la segunda pantalla!',
+        textAlign: TextAlign.center,
+      ),
+      behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.only(
+        left: MediaQuery.of(context).size.width * 0.15,
+        right: MediaQuery.of(context).size.width * 0.15,
+        bottom: 20,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,22 +229,7 @@ class SecondScreen extends StatelessWidget {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('¡Bienvenido a la segunda pantalla!'),
-            const SizedBox(height: 18),
-            SizedBox(
-              width: 180,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('Regresar'),
-              ),
-            ),
-          ],
+          children: <Widget>[],
         ),
       ),
     );
@@ -78,7 +275,19 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _showSnackBar() {
-    final snackBar = SnackBar(content: Text('¡Hola! Este es un SnackBar.'));
+    final snackBar = SnackBar(
+      content: const Text(
+        '¡Hola! Este es un SnackBar.',
+        textAlign: TextAlign.center,
+      ),
+      behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.only(
+        left: MediaQuery.of(context).size.width * 0.15,
+        right: MediaQuery.of(context).size.width * 0.15,
+        bottom: 20,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
@@ -102,12 +311,12 @@ class _MyHomePageState extends State<MyHomePage> {
         
         child: Column(
           
-          mainAxisAlignment: .center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('pulsar el  + :'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            // Widget innovador: Analizador de ondas
+            AnimatedWaveAnalyzer(
+              value: _counter,
+              onTap: _incrementCounter,
             ),
             const SizedBox(height: 12),
             Padding(
@@ -123,27 +332,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: const Text('Ir a la segunda pantalla'),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: const Color.fromARGB(255, 253, 253, 253),
-                      ),
-                      onPressed: _showSnackBar,
-                      child: const Text('Mostrar SnackBar'),
-                    ),
-                  ),
                 ],
               ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
